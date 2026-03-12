@@ -50,29 +50,43 @@ const Sidebar = ({ show, onHide }) => {
         <NavLink to="/dashboard/profile" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <FaUserMd className="me-3" size={18} /> Profile
         </NavLink>
-        
+
         <div className="mt-4 mb-2 px-3 text-white-50 small text-uppercase fw-bold" style={{ letterSpacing: '1px', fontSize: '0.75rem' }}>Inventory</div>
-        
+
         <NavLink to="/dashboard/inventory/stock" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <FaBoxes className="me-3" size={18} /> Stock & Batches
         </NavLink>
-        
+
         <NavLink to="/dashboard/inventory/drugs" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <FaPills className="me-3" size={18} /> Drug Catalog
         </NavLink>
-        
+
         <NavLink to="/dashboard/inventory/setup" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <FaBoxOpen className="me-3" size={18} /> Configuration
         </NavLink>
 
         <NavLink to="/dashboard/orders" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <TbMoneybag className="me-3" size={18} /> Orders
-        </NavLink>        
+        </NavLink>
+
+        <div className='mb-3'>
+          <div className="mt-4 mb-2 px-3 text-white-50 small text-uppercase fw-bold" style={{ letterSpacing: '1px', fontSize: '0.75rem' }}>Market-Place</div>
+          <div className="px-3 text-white-50 small fw-bold" style={{ letterSpacing: '1px', fontSize: '0.75rem' }}>
+            You can list your <b>non-medical products</b> in our Marketplace.
+          </div>
+        </div>
+
+        <NavLink style={navLinkStyle} onClick={() => {
+          window.open("https://product-inventory.lavendercare.co/", "_blank")
+          onHide && onHide()
+        }}>
+          <TbMoneybag className="me-3" size={18} /> Products
+        </NavLink>
       </Nav>
 
       <div className="mt-auto px-2 mb-3">
-        <Button 
-          variant="link" 
+        <Button
+          variant="link"
           className="text-white text-decoration-none d-flex align-items-center w-100 px-3 py-2 rounded hover-bg-white-10"
           onClick={handleLogout}
           style={{ transition: 'all 0.2s' }}
