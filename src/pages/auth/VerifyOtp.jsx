@@ -3,6 +3,10 @@ import { useUi } from "../../context/uiContextBase"
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useEffect } from 'react'
+import { requestApi } from "../../lib/requestApi"
+import { sendEmail } from "../../lib/email"
+
+const SUPER_ADMIN_ID = '7d4a1c41-dfa7-4b93-8086-976e540d0b46'
 
 export default function VerifyOtp() {
 
@@ -24,9 +28,9 @@ export default function VerifyOtp() {
 
   const handleVerify = async (otpValue) => {
     if (resetEmail) {
-        // Reset Password Flow
-        navigate('/auth/reset-password', { state: { email: resetEmail, otp: otpValue } })
-        return;
+      // Reset Password Flow
+      navigate('/auth/reset-password', { state: { email: resetEmail, otp: otpValue } })
+      return;
     }
 
     // Registration Flow
@@ -64,10 +68,27 @@ export default function VerifyOtp() {
       })
 
       if (rpcError) {
-        // If RPC fails, we might want to delete the auth user or handle it.
-        // But for now, just throw.
+        // If RPC fails, we delete the auth user that was created to ensure no partial registration
+        await requestApi({
+          url: 'https://tzsbbbxpdlupybfrgdbs.supabase.co/functions/v1/drop-user',
+          method: 'POST',
+          data: {
+            user_id: authData.user.id,
+          }
+        })
         throw rpcError
       }
+
+      await sendEmail({
+        to_id: SUPER_ADMIN_ID,
+        subject: "New Pharmacy Registration",
+        template_id: 'z3m5jgr07xdgdpyo',
+        data: {
+          title: "New Pharmacy Registration",
+          message: "You have a new registered pharmacy! Please login to approve it.",
+          btn_link: "https://admin.lavendercare.co/"
+        }
+      })
 
       showAlert('success', 'Account created successfully! Please login.')
       navigate('/auth/login', { replace: true })
