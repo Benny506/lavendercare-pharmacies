@@ -34,9 +34,13 @@ const OrderDetailsModal = ({ order, show, onHide }) => {
 
   const renderItem = (item) => {
     const snapshot = item.item_snapshot || {};
-    const drugInfo = snapshot.drugInfo || {};
-    const formulationInfo = snapshot.drugFormulationInfo || {};
-    const imageUrl = formulationInfo.images?.[0]?.image_url;
+    
+    // Support both consumer nested format and hospital flat format
+    const drugName = snapshot.drugInfo?.name || snapshot.brand_name || 'N/A';
+    const genericName = snapshot.drugInfo?.generic_name || snapshot.generic_name || 'N/A';
+    const strength = snapshot.drugFormulationInfo?.strength || snapshot.strength || 'N/A';
+    const form = snapshot.drugFormulationInfo?.form || snapshot.form || 'N/A';
+    const imageUrl = snapshot.drugFormulationInfo?.images?.[0]?.image_url || null;
 
     return (
       <Card key={item.id} className="mb-3 item-detail-card">
@@ -50,9 +54,9 @@ const OrderDetailsModal = ({ order, show, onHide }) => {
               />
             </Col>
             <Col lg={10}>
-              <h5 className="item-name">{drugInfo.name || 'N/A'}</h5>
-              <p className="item-generic-name text-muted">{drugInfo.generic_name || 'N/A'}</p>
-              <p className="item-formulation">{`${formulationInfo.strength || 'N/A'} - ${formulationInfo.form || 'N/A'}`}</p>
+              <h5 className="item-name">{drugName}</h5>
+              <p className="item-generic-name text-muted">{genericName}</p>
+              <p className="item-formulation">{`${strength} - ${form}`}</p>
               <hr />
               <Row>
                 <Col><strong>Quantity:</strong> {item.quantity || 'N/A'}</Col>

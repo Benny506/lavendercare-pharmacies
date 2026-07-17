@@ -33,17 +33,56 @@ const AutoLogin = () => {
         dispatch(setSession(session));
         dispatch(setUser(session.user));
 
-        // Fetch profile
-        // 1. Get business entity ID for this user
-        const { data: businessEntity, error: beError } = await supabase
-          .from('business_entities')
-          .select('id, entity_type')
-          .eq('user_id', session.user.id)
-          .eq('entity_type', 'pharmacy')
-          .single();
+        // 1. Determine target pharmacy
+        const targetPharmacyId = sessionStorage.getItem('targetPharmacyId');
+        
+        let businessEntity = null;
 
-        if (beError) throw beError;
-        if (!businessEntity) throw new Error('No pharmacy business entity found for this user.');
+        if (targetPharmacyId) {
+          // Iframe/Hospital Mode
+          const { data: targetBe, error: targetBeError } = await supabase
+            .from('business_entities')
+            .select('*')
+            .eq('id', targetPharmacyId)
+            .single();
+
+          if (targetBeError) throw targetBeError;
+
+          if (targetBe.user_id === session.user.id) {
+            // Direct ownership
+            businessEntity = targetBe;
+          } else if (targetBe.hospital_id) {
+            // Check hospital affiliation
+            const { data: hospitalProfile, error: hpError } = await supabase
+              .from('hospital_profiles')
+              .select('hospital_id, role')
+              .eq('id', session.user.id)
+              .single();
+
+            if (!hpError && hospitalProfile && hospitalProfile.hospital_id === targetBe.hospital_id) {
+              if (['hospital_admin', 'pharmacist'].includes(hospitalProfile.role)) {
+                businessEntity = targetBe;
+              }
+            }
+          }
+
+          if (!businessEntity) {
+            throw new Error('Unauthorized Access. You do not have permission to manage this pharmacy.');
+          }
+        } else {
+          // Manual Login (Standalone mode)
+          const { data: beData, error: beError } = await supabase
+            .from('business_entities')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('entity_type', 'pharmacy')
+            .single();
+
+          if (beError || !beData) {
+            throw new Error('No pharmacy business entity found for this user.');
+          }
+          businessEntity = beData;
+        }
 
         // 2. Get pharmacy profile using business entity ID
         const { data: profile, error: profileError } = await supabase
@@ -60,7 +99,7 @@ const AutoLogin = () => {
         await loadInventoryData(profile.id, dispatch);
 
         // If on login/register page and authenticated, redirect to dashboard
-        if (location.pathname.startsWith('/auth')) {
+        if (location.pathname.startsWith('/auth') || location.pathname === '/') {
              navigate('/dashboard/profile', { replace: true });
         }
 

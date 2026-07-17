@@ -36,7 +36,7 @@ const Sidebar = ({ show, onHide }) => {
     textDecoration: 'none'
   });
 
-  const NavContent = () => (
+  const navContent = (
     <div className="d-flex flex-column h-100 pt-4">
       <div className="mb-4 px-3">
         <div className="d-flex align-items-center gap-2 mb-1">
@@ -57,9 +57,10 @@ const Sidebar = ({ show, onHide }) => {
           <FaBoxes className="me-3" size={18} /> Stock & Batches
         </NavLink>
 
-        <NavLink to="/dashboard/inventory/drugs" style={navLinkStyle} onClick={() => onHide && onHide()}>
-          <FaPills className="me-3" size={18} /> Drug Catalog
+        <NavLink to="/dashboard/inventory/catalog" style={navLinkStyle} onClick={() => onHide && onHide()}>
+          <FaPills className="me-3" size={18} /> Inventory Catalog
         </NavLink>
+
 
         <NavLink to="/dashboard/inventory/setup" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <FaBoxOpen className="me-3" size={18} /> Configuration
@@ -67,6 +68,12 @@ const Sidebar = ({ show, onHide }) => {
 
         <NavLink to="/dashboard/orders" style={navLinkStyle} onClick={() => onHide && onHide()}>
           <TbMoneybag className="me-3" size={18} /> Orders
+        </NavLink>
+
+        <div className="mt-4 mb-2 px-3 text-white-50 small text-uppercase fw-bold" style={{ letterSpacing: '1px', fontSize: '0.75rem' }}>Hospital</div>
+
+        <NavLink to="/dashboard/hospital-queue" style={navLinkStyle} onClick={() => onHide && onHide()}>
+          <FaFirstOrder className="me-3" size={18} /> Hospital Queue
         </NavLink>
 
         <div className='mb-3'>
@@ -100,8 +107,8 @@ const Sidebar = ({ show, onHide }) => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="d-none d-lg-flex flex-column position-fixed start-0 top-0 bottom-0 shadow-sm" style={{ width: '260px', zIndex: 1000, backgroundColor: '#7B3FE4' }}>
-        <NavContent />
+      <div className="d-none d-lg-flex flex-column position-fixed start-0 top-0 bottom-0 shadow-sm" style={{ overflowY: 'auto', width: '260px', zIndex: 1000, backgroundColor: '#7B3FE4' }}>
+        {navContent}
       </div>
 
       {/* Mobile Offcanvas */}
@@ -110,10 +117,11 @@ const Sidebar = ({ show, onHide }) => {
           <Offcanvas.Title className="text-white fw-bold">Menu</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body className="p-0">
-          <NavContent />
+          {navContent}
         </Offcanvas.Body>
       </Offcanvas>
     </>
+
   );
 };
 

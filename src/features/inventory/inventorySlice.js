@@ -228,7 +228,7 @@ export const addDrug = createAsyncThunk(
               uploadedImages.push(imgRecord);
             }
           }
-          formulationsData.push({ ...insertedF, drug_formulation_images: uploadedImages });
+          formulationsData.push({ ...insertedF, images: uploadedImages });
         }
       }
 
@@ -248,7 +248,7 @@ export const updateDrugDetails = createAsyncThunk(
         .from('drugs')
         .update(drug)
         .eq('id', id)
-        .select(`*, manufacturers(name), drug_formulations(*, drug_formulation_images(*))`); // Fetch everything to keep state consistent
+        .select(`*, manufacturers(name), drug_formulations(*, images: drug_formulation_images(*))`); // Fetch everything to keep state consistent
 
       if (error) throw error;
       if (!data || data.length === 0) throw new Error('Update failed: No rows returned');
@@ -355,7 +355,7 @@ export const updateDrugFormulations = createAsyncThunk(
       // Return updated drug object
       const { data: updatedDrug, error: fetchError } = await supabase
         .from('drugs')
-        .select(`*, manufacturers(name), drug_formulations(*, drug_formulation_images(*))`)
+        .select(`*, manufacturers(name), drug_formulations(*, images: drug_formulation_images(*))`)
         .eq('id', drugId)
         .single();
 
@@ -376,7 +376,7 @@ export const toggleFormulationVisibility = createAsyncThunk(
         .from('drug_formulations')
         .update({ is_visible })
         .eq('id', id)
-        .select(`*, drug_formulation_images(*), drugs(*, manufacturers(name))`) // Fetch parent drug to update local state properly
+        .select(`*, images: drug_formulation_images(*), drugs(*, manufacturers(name))`) // Fetch parent drug to update local state properly
         .single();
 
       if (error) throw error;

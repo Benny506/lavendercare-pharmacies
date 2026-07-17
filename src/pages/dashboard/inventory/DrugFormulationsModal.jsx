@@ -20,7 +20,6 @@ const DrugFormulationsModal = ({ show, onHide, drug, onToggleVisibility }) => {
         form: Yup.string().required('Form is required'),
         selling_price: Yup.number().required('Selling price is required').positive('Price must be positive'),
         images: Yup.array()
-          .min(1, 'At least 1 image is required')
           .max(4, 'Maximum 4 images allowed')
       })
     )
@@ -33,8 +32,9 @@ const DrugFormulationsModal = ({ show, onHide, drug, onToggleVisibility }) => {
         strength: f.strength,
         form: f.form,
         selling_price: f.selling_price || '',
-        images: f.drug_formulation_images || [], // Existing images
-        is_visible: f.is_visible !== false // Default to true if undefined
+        images: f.images || [], // Existing images
+        is_visible: f.is_visible !== false, // Default to true if undefined
+        is_hmo_covered: f.is_hmo_covered || false
       })) || []
     },
     validationSchema,
@@ -185,7 +185,7 @@ const DrugFormulationsModal = ({ show, onHide, drug, onToggleVisibility }) => {
                                 </Form.Control.Feedback>
                               </Form.Group>
                             </Col>
-                            <Col md={12}>
+                            <Col md={6}>
                                 <Form.Group>
                                     <Form.Label>Selling Price</Form.Label>
                                     <InputGroup>
@@ -202,10 +202,23 @@ const DrugFormulationsModal = ({ show, onHide, drug, onToggleVisibility }) => {
                                     </Form.Control.Feedback>
                                 </Form.Group>
                             </Col>
+                            <Col md={6}>
+                                <Form.Group className="d-flex flex-column justify-content-center h-100 pt-3">
+                                    <Form.Check 
+                                        type="switch"
+                                        id={`hmo-switch-${index}`}
+                                        label="HMO Covered"
+                                        disabled={!editMode}
+                                        checked={formik.values.formulations[index].is_hmo_covered}
+                                        {...formik.getFieldProps(`formulations.${index}.is_hmo_covered`)}
+                                    />
+                                    <small className="text-muted">Will this drug be billed to HMO if patient is covered?</small>
+                                </Form.Group>
+                            </Col>
                             
                             {/* Images Section */}
                             <Col md={12}>
-                              <Form.Label>Images (Min 1, Max 4) {editMode && <span className="text-danger">*</span>}</Form.Label>
+                              <Form.Label>Images (Max 4)</Form.Label>
                               <div className="d-flex flex-wrap gap-3 align-items-start">
                                 {/* Image Previews */}
                                 {formulation.images && formulation.images.map((img, imgIndex) => (

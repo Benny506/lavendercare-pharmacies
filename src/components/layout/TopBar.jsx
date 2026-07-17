@@ -26,10 +26,10 @@ const TopBar = ({ toggleSidebar }) => {
         description: 'Manage manufacturers and suppliers for your pharmacy.'
       };
     }
-    if (path.includes('/dashboard/inventory/drugs')) {
+    if (path.includes('/dashboard/inventory/drugs') || path.includes('/dashboard/inventory/catalog')) {
       return {
-        title: 'Drug Catalog',
-        description: 'View and manage your pharmacy\'s drug database.'
+        title: 'Inventory Catalog',
+        description: 'View and manage your pharmacy\'s inventory database.'
       };
     }
     if (path.includes('/dashboard/inventory/stock')) {

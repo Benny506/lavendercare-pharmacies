@@ -25,7 +25,9 @@ const Drugs = () => {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmTitle, setConfirmTitle] = useState('');
 
-  const [selectedDrug, setSelectedDrug] = useState(null);
+  const [selectedDrugId, setSelectedDrugId] = useState(null);
+  const selectedDrug = drugs.find(d => d.id === selectedDrugId) || null;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [step, setStep] = useState(1);
 
@@ -36,18 +38,20 @@ const Drugs = () => {
       generic_name: '',
       description: '',
       manufacturer_id: '',
+      item_type: 'medication',
       formulations: [{ strength: '', form: '', images: [], selling_price: '' }],
     },
     validationSchema: Yup.object({
-      name: Yup.string().required('Drug Name is required'),
+      name: Yup.string().required('Item Name is required'),
       generic_name: Yup.string(),
       description: Yup.string(),
       manufacturer_id: Yup.string().required('Manufacturer is required'),
+      item_type: Yup.string().required('Item type is required'),
       formulations: Yup.array().of(
         Yup.object().shape({
           strength: Yup.string().required('Strength is required'),
           form: Yup.string().required('Form is required'),
-          images: Yup.array().min(1, 'At least 1 image is required').max(4, 'Max 4 images'),
+          images: Yup.array().max(4, 'Max 4 images'),
           selling_price: Yup.number().required('Selling price is required').positive('Price must be positive')
         })
       ).min(1, 'At least one formulation is required'),
@@ -61,13 +65,13 @@ const Drugs = () => {
           drug: drugData,
           formulations: formulations
         })).unwrap();
-        showAlert('success', 'Drug added successfully!');
+        showAlert('success', 'Item added successfully!');
         resetForm();
         setShowAddModal(false);
         setStep(1);
       } catch (error) {
         console.error('Save drug error:', error);
-        showAlert('error', error.message || 'Failed to save drug');
+        showAlert('error', error.message || 'Failed to save item');
       } finally {
         stopLoading();
       }
@@ -83,7 +87,7 @@ const Drugs = () => {
       manufacturer_id: ''
     },
     validationSchema: Yup.object({
-      name: Yup.string().required('Drug Name is required'),
+      name: Yup.string().required('Item Name is required'),
       generic_name: Yup.string(),
       description: Yup.string(),
       manufacturer_id: Yup.string().required('Manufacturer is required'),
@@ -107,7 +111,7 @@ const Drugs = () => {
   });
 
   const handleOpenEditDrug = (drug) => {
-    setSelectedDrug(drug);
+    setSelectedDrugId(drug.id);
     editDrugFormik.setValues({
       name: drug.name,
       generic_name: drug.generic_name || '',
@@ -118,7 +122,7 @@ const Drugs = () => {
   };
 
   const handleOpenFormulations = (drug) => {
-    setSelectedDrug(drug);
+    setSelectedDrugId(drug.id);
     setShowFormulationsModal(true);
   };
 
@@ -183,7 +187,7 @@ const Drugs = () => {
               setShowAddModal(true);
           }}
         >
-          <FaPlus /> Add New Drug
+          <FaPlus /> Add New Item
         </Button>
       </div>
 
@@ -282,7 +286,7 @@ const Drugs = () => {
       {/* Add Drug Modal (Wizard) */}
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)} size="lg" centered backdrop="static">
         <Modal.Header closeButton>
-          <Modal.Title>Add New Drug</Modal.Title>
+          <Modal.Title>Add New Inventory Item</Modal.Title>
         </Modal.Header>
         <Modal.Body>
            <FormikProvider value={addDrugFormik}>
@@ -291,9 +295,19 @@ const Drugs = () => {
                        <div className="step-1">
                            <h6 className="fw-bold mb-3">Step 1: Basic Information</h6>
                            <Row className="g-3">
+                               <Col md={12}>
+                                   <Form.Group>
+                                       <Form.Label>Item Category</Form.Label>
+                                       <Form.Select {...addDrugFormik.getFieldProps('item_type')} isInvalid={addDrugFormik.touched.item_type && addDrugFormik.errors.item_type}>
+                                           <option value="medication">Medication (Drug, Injection, Syrup)</option>
+                                           <option value="consumable">Medical Consumable (Cannula, Plaster, Syringe)</option>
+                                       </Form.Select>
+                                       <Form.Control.Feedback type="invalid">{addDrugFormik.errors.item_type}</Form.Control.Feedback>
+                                   </Form.Group>
+                               </Col>
                                <Col md={6}>
                                    <Form.Group>
-                                       <Form.Label>Drug Name</Form.Label>
+                                       <Form.Label>Item Name</Form.Label>
                                        <Form.Control {...addDrugFormik.getFieldProps('name')} isInvalid={addDrugFormik.touched.name && addDrugFormik.errors.name} />
                                        <Form.Control.Feedback type="invalid">{addDrugFormik.errors.name}</Form.Control.Feedback>
                                    </Form.Group>
@@ -355,9 +369,9 @@ const Drugs = () => {
                                                                 <Form.Control.Feedback type="invalid">{addDrugFormik.errors.formulations?.[index]?.selling_price}</Form.Control.Feedback>
                                                             </Form.Group>
                                                         </Col>
-                                                       <Col md={12}>
-                                                            <Form.Label className="small text-muted">Images (Min 1, Max 4)</Form.Label>
-                                                            <div className="d-flex gap-2 flex-wrap">
+                                                        <Col md={12}>
+                                                            <Form.Label className="small text-muted">Images (Max 4)</Form.Label>
+                                                            <div className="d-flex flex-wrap gap-2 mb-2">
                                                                 {f.images.map((img, imgIdx) => (
                                                                     <div key={imgIdx} className="position-relative">
                                                                         <Image src={URL.createObjectURL(img)} thumbnail width={60} height={60} style={{ objectFit: 'cover' }} />
@@ -386,7 +400,7 @@ const Drugs = () => {
                            </FieldArray>
                            <div className="d-flex justify-content-between mt-4">
                                <Button variant="secondary" onClick={() => setStep(1)}><FaArrowLeft /> Back</Button>
-                               <Button type="submit" style={{ backgroundColor: '#7B3FE4', border: 'none' }} disabled={addDrugFormik.isSubmitting}>Save Drug</Button>
+                               <Button type="submit" style={{ backgroundColor: '#7B3FE4', border: 'none' }} disabled={addDrugFormik.isSubmitting}>Save Item</Button>
                            </div>
                        </div>
                    )}

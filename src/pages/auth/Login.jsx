@@ -11,6 +11,8 @@ const Login = () => {
   const navigate = useNavigate();
   const { loginHandler } = useAuth();
 
+  const isIframe = window.self !== window.top;
+
   const formik = useFormik({
     initialValues: {
       email: '',
@@ -54,7 +56,9 @@ const Login = () => {
             <Form.Group className="mb-4" controlId="password">
               <div className="d-flex justify-content-between align-items-center">
                 <Form.Label className="small text-muted fw-bold mb-0">Password</Form.Label>
-                <Link to="/auth/forgot-password" style={{ fontSize: '12px', textDecoration: 'none' }}>Forgot password?</Link>
+                {!isIframe && (
+                  <Link to="/auth/forgot-password" style={{ fontSize: '12px', textDecoration: 'none' }}>Forgot password?</Link>
+                )}
               </div>
               <div className="input-group mt-2">
                 <span className="input-group-text bg-light border-end-0"><FaLock className="text-muted" /></span>
@@ -81,11 +85,13 @@ const Login = () => {
             </Button>
           </Form>
 
-          <div className="text-center mt-4">
-            <p className="small text-muted mb-0">
-              Don't have an account? <Link to="/auth/register" className="fw-bold text-primary text-decoration-none">Register Pharmacy</Link>
-            </p>
-          </div>
+          {!isIframe && (
+            <div className="text-center mt-4">
+              <p className="small text-muted mb-0">
+                Don't have an account? <Link to="/auth/register" className="fw-bold text-primary text-decoration-none">Register Pharmacy</Link>
+              </p>
+            </div>
+          )}
         </Card.Body>
       </Card>
     </Container>

@@ -24,7 +24,7 @@ const Orders = () => {
         .from('pharmacy_orders')
         .select(`
           *,
-          platform_order: pharmacy_platform_orders (*, user: user_profiles(name)),
+          platform_order: pharmacy_platform_orders (*, user: user_profiles(name), patient: patients(first_name, last_name)),
           order_items: pharmacy_order_items (*)
         `)
         .eq('pharmacy_id', profile.id)
@@ -120,7 +120,10 @@ const Orders = () => {
               <tbody>
                 {orders.map(order => (
                   <tr key={order.id}>
-                    <td>{order.platform_order.user.name}</td>
+                    <td>
+                      {order.platform_order?.user?.name || 
+                       (order.platform_order?.patient ? `${order.platform_order.patient.first_name} ${order.platform_order.patient.last_name}` : 'Unknown')}
+                    </td>
                     <td>₦{order.subtotal_amount.toLocaleString()}</td>
                     <td>
                       <Badge pill bg={order.platform_order.payment_status === 'paid' ? 'success-light' : 'warning-light'} 
