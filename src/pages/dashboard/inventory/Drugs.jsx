@@ -39,7 +39,7 @@ const Drugs = () => {
       description: '',
       manufacturer_id: '',
       item_type: 'medication',
-      formulations: [{ strength: '', form: '', images: [], selling_price: '' }],
+      formulations: [{ strength: '', form: '', images: [], selling_price: '', is_hmo_covered: false }],
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Item Name is required'),
@@ -349,29 +349,45 @@ const Drugs = () => {
                         {addDrugFormik.values.formulations.map((f, index) => (
                           <Card key={index} className="mb-3 bg-light border-0">
                             <Card.Body>
-                              <div className="d-flex justify-content-between mb-2">
-                                <strong>Formulation #{index + 1}</strong>
-                                {index > 0 && <Button variant="link" className="text-danger p-0" onClick={() => remove(index)}><FaTrash /></Button>}
-                              </div>
-                              <Row className="g-3">
-                                <Col md={6}>
-                                  <Form.Control placeholder="Strength (e.g. 500mg)" {...addDrugFormik.getFieldProps(`formulations.${index}.strength`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.strength && addDrugFormik.errors.formulations?.[index]?.strength} />
-                                </Col>
-                                <Col md={6}>
-                                  <Form.Control placeholder="Form (e.g. Tablet)" {...addDrugFormik.getFieldProps(`formulations.${index}.form`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.form && addDrugFormik.errors.formulations?.[index]?.form} />
-                                </Col>
-                                <Col md={12}>
-                                  <Form.Group>
-                                    <Form.Label>Selling Price</Form.Label>
-                                    <InputGroup>
-                                      <InputGroup.Text>NGN</InputGroup.Text>
-                                      <Form.Control type="number" placeholder="Enter selling price" {...addDrugFormik.getFieldProps(`formulations.${index}.selling_price`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.selling_price && addDrugFormik.errors.formulations?.[index]?.selling_price} />
-                                    </InputGroup>
-                                    <Form.Control.Feedback type="invalid">{addDrugFormik.errors.formulations?.[index]?.selling_price}</Form.Control.Feedback>
-                                  </Form.Group>
-                                </Col>
-                                <Col md={12}>
-                                  <Form.Label className="small text-muted">Images (Max 4)</Form.Label>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <h6 className="mb-0 text-primary">Formulation {index + 1}</h6>
+                              {index > 0 && (
+                                <Button variant="outline-danger" size="sm" onClick={() => remove(index)}>
+                                  <FaTrash /> Remove
+                                </Button>
+                              )}
+                            </div>
+                            <Row className="g-3">
+                              <Col md={6}>
+                                <Form.Control placeholder="Strength (e.g. 500mg)" {...addDrugFormik.getFieldProps(`formulations.${index}.strength`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.strength && addDrugFormik.errors.formulations?.[index]?.strength} />
+                              </Col>
+                              <Col md={6}>
+                                <Form.Control placeholder="Form (e.g. Tablet)" {...addDrugFormik.getFieldProps(`formulations.${index}.form`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.form && addDrugFormik.errors.formulations?.[index]?.form} />
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group>
+                                  <Form.Label>Selling Price</Form.Label>
+                                  <InputGroup>
+                                    <InputGroup.Text>NGN</InputGroup.Text>
+                                    <Form.Control type="number" placeholder="Enter selling price" {...addDrugFormik.getFieldProps(`formulations.${index}.selling_price`)} isInvalid={addDrugFormik.touched.formulations?.[index]?.selling_price && addDrugFormik.errors.formulations?.[index]?.selling_price} />
+                                  </InputGroup>
+                                  <Form.Control.Feedback type="invalid">{addDrugFormik.errors.formulations?.[index]?.selling_price}</Form.Control.Feedback>
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group className="d-flex flex-column justify-content-center h-100 pt-3">
+                                  <Form.Check 
+                                    type="switch"
+                                    id={`hmo-switch-create-${index}`}
+                                    label="HMO Covered"
+                                    checked={Boolean(addDrugFormik.values.formulations[index].is_hmo_covered)}
+                                    onChange={(e) => addDrugFormik.setFieldValue(`formulations.${index}.is_hmo_covered`, e.target.checked)}
+                                  />
+                                  <small className="text-muted">Will this drug be billed to HMO if patient is covered?</small>
+                                </Form.Group>
+                              </Col>
+                              <Col md={12}>
+                                <Form.Label className="small text-muted">Images (Max 4)</Form.Label>
                                   <div className="d-flex flex-wrap gap-2 mb-2">
                                     {f.images.map((img, imgIdx) => (
                                       <div key={imgIdx} className="position-relative">
@@ -395,7 +411,7 @@ const Drugs = () => {
                             </Card.Body>
                           </Card>
                         ))}
-                        <Button variant="outline-primary" size="sm" onClick={() => push({ strength: '', form: '', images: [], selling_price: '' })}><FaPlus /> Add Another</Button>
+                        <Button variant="outline-primary" className="w-100 border-dashed" onClick={() => push({ strength: '', form: '', images: [], selling_price: '', is_hmo_covered: false })}><FaPlus /> Add Another</Button>
                       </div>
                     )}
                   </FieldArray>

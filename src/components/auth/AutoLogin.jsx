@@ -70,18 +70,49 @@ const AutoLogin = () => {
             throw new Error('Unauthorized Access. You do not have permission to manage this pharmacy.');
           }
         } else {
-          // Manual Login (Standalone mode)
-          const { data: beData, error: beError } = await supabase
+          // Manual Login (Standalone mode) without local storage fallback
+          let authorizedEntities = [];
+
+          const { data: directEntities } = await supabase
             .from('business_entities')
             .select('*')
             .eq('user_id', session.user.id)
-            .eq('entity_type', 'pharmacy')
+            .eq('entity_type', 'pharmacy');
+          
+          if (directEntities) authorizedEntities = [...directEntities];
+
+          const { data: hospitalProfile } = await supabase
+            .from('hospital_profiles')
+            .select('hospital_id, role')
+            .eq('id', session.user.id)
             .single();
 
-          if (beError || !beData) {
+          if (hospitalProfile && ['hospital_admin', 'pharmacist'].includes(hospitalProfile.role)) {
+            const { data: hospitalEntities } = await supabase
+              .from('business_entities')
+              .select('*')
+              .eq('hospital_id', hospitalProfile.hospital_id)
+              .eq('entity_type', 'pharmacy');
+            
+            if (hospitalEntities) {
+              hospitalEntities.forEach(he => {
+                if (!authorizedEntities.find(e => e.id === he.id)) {
+                  authorizedEntities.push(he);
+                }
+              });
+            }
+          }
+
+          if (authorizedEntities.length === 0) {
             throw new Error('No pharmacy business entity found for this user.');
           }
-          businessEntity = beData;
+
+          if (authorizedEntities.length > 1) {
+            // Need to select one, force re-login to trigger the selection modal
+            throw new Error('Multiple pharmacies found. Please login again to select a pharmacy.');
+          }
+
+          businessEntity = authorizedEntities[0];
         }
 
         // 2. Get pharmacy profile using business entity ID

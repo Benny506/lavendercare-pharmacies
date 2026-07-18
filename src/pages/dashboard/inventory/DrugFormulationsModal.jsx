@@ -209,8 +209,8 @@ const DrugFormulationsModal = ({ show, onHide, drug, onToggleVisibility }) => {
                                         id={`hmo-switch-${index}`}
                                         label="HMO Covered"
                                         disabled={!editMode}
-                                        checked={formik.values.formulations[index].is_hmo_covered}
-                                        {...formik.getFieldProps(`formulations.${index}.is_hmo_covered`)}
+                                        checked={Boolean(formik.values.formulations[index].is_hmo_covered)}
+                                        onChange={(e) => formik.setFieldValue(`formulations.${index}.is_hmo_covered`, e.target.checked)}
                                     />
                                     <small className="text-muted">Will this drug be billed to HMO if patient is covered?</small>
                                 </Form.Group>
