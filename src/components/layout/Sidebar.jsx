@@ -10,7 +10,7 @@ import { TbMoneybag } from "react-icons/tb";
 import { getPublicImageUrl } from '../../lib/requestApi';
 
 const Sidebar = ({ show, onHide }) => {
-  const { logout } = useAuth();
+  const { logoutHandler } = useAuth();
   const { showAlert } = useUi();
   const { counts } = useBadgeCounts();
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Sidebar = ({ show, onHide }) => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logoutHandler();
       showAlert('success', 'Logged out successfully');
       navigate('/auth/login', { replace: true });
     } catch (error) {

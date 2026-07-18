@@ -34,12 +34,12 @@ const AutoLogin = () => {
         dispatch(setUser(session.user));
 
         // 1. Determine target pharmacy
-        const targetPharmacyId = sessionStorage.getItem('targetPharmacyId');
+        const targetPharmacyId = sessionStorage.getItem('targetPharmacyId') || localStorage.getItem('selectedPharmacyId');
         
         let businessEntity = null;
 
         if (targetPharmacyId) {
-          // Iframe/Hospital Mode
+          // Iframe/Hospital Mode or Selected Standalone
           const { data: targetBe, error: targetBeError } = await supabase
             .from('business_entities')
             .select('*')

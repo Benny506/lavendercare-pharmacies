@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Form, Button, Card, Container } from 'react-bootstrap';
+import { Form, Button, Card, Container, Modal } from 'react-bootstrap';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaHospitalAlt } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [availableProfiles, setAvailableProfiles] = useState([]);
   const navigate = useNavigate();
-  const { loginHandler } = useAuth();
+  const { loginHandler, completeLogin } = useAuth();
 
   const isIframe = window.self !== window.top;
 
@@ -23,7 +25,15 @@ const Login = () => {
       password: Yup.string().required('Required'),
     }),
     onSubmit: async (values) => {
-      await loginHandler(values.email, values.password);
+      const result = await loginHandler(values.email, values.password);
+      if (result && result.ok) {
+        if (result.profiles.length === 1) {
+          completeLogin(result.profiles[0]);
+        } else if (result.profiles.length > 1) {
+          setAvailableProfiles(result.profiles);
+          setShowSelectionModal(true);
+        }
+      }
     },
   });
 
@@ -94,6 +104,40 @@ const Login = () => {
           )}
         </Card.Body>
       </Card>
+
+      <Modal show={showSelectionModal} onHide={() => setShowSelectionModal(false)} centered backdrop="static">
+        <Modal.Header>
+          <Modal.Title className="fw-bold text-primary">Select Pharmacy</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted small mb-4">You have access to multiple pharmacies. Please select the one you want to manage.</p>
+          <div className="d-flex flex-column gap-3">
+            {availableProfiles.map(profile => {
+              return (
+                <Button
+                  key={profile.id}
+                  variant="outline-primary"
+                  className="text-start p-3 d-flex align-items-center gap-3 border"
+                  style={{ borderRadius: '12px' }}
+                  onClick={() => {
+                    setShowSelectionModal(false);
+                    completeLogin(profile);
+                  }}
+                >
+                  <div className="bg-light p-2 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                    <FaHospitalAlt className="text-primary" size={18} />
+                  </div>
+                  <div>
+                    <h6 className="mb-0 fw-bold">{profile.pharmacy_name}</h6>
+                    <small className="text-muted">{profile.address}</small>
+                  </div>
+                </Button>
+              )
+            })}
+          </div>
+        </Modal.Body>
+      </Modal>
+
     </Container>
   );
 };
