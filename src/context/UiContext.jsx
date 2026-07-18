@@ -7,6 +7,7 @@ const MotionDiv = motion.div
 export function UiProvider({ children }) {
   const [alert, setAlert] = useState(null)
   const [loadingCount, setLoadingCount] = useState(0)
+  const [subtleLoading, setSubtleLoading] = useState({ isLoading: false, message: '' })
 
   const showAlert = useCallback((type, message, duration = 5000) => {
     const id = Date.now()
@@ -28,6 +29,14 @@ export function UiProvider({ children }) {
     setLoadingCount(0)
   }, [])
 
+  const showSubtleLoader = useCallback((message = '') => {
+    setSubtleLoading({ isLoading: true, message })
+  }, [])
+
+  const hideSubtleLoader = useCallback(() => {
+    setSubtleLoading({ isLoading: false, message: '' })
+  }, [])
+
   const value = {
     alert,
     showAlert,
@@ -35,12 +44,15 @@ export function UiProvider({ children }) {
     loading: loadingCount > 0,
     startLoading,
     stopLoading,
+    showSubtleLoader,
+    hideSubtleLoader,
   }
 
   return (
     <UiContext.Provider value={value}>
       {children}
       <GlobalLoader active={loadingCount > 0} />
+      <GlobalSubtleLoader active={subtleLoading.isLoading} message={subtleLoading.message} />
       <GlobalAlert alert={alert} clearAlert={clearAlert} />
     </UiContext.Provider>
   )
@@ -107,5 +119,44 @@ function GlobalAlert({ alert, clearAlert }) {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function GlobalSubtleLoader({ active, message }) {
+  return (
+    <AnimatePresence>
+      {active && (
+        <MotionDiv
+          initial={{ y: -50, opacity: 0, x: '-50%' }}
+          animate={{ y: 16, opacity: 1, x: '-50%' }}
+          exit={{ y: -50, opacity: 0, x: '-50%' }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: '50%',
+            zIndex: 9999,
+            backdropFilter: 'blur(8px)',
+            pointerEvents: 'none',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid #eaeaea',
+            minWidth: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            padding: '8px 24px',
+            borderRadius: '50px',
+          }}
+        >
+          <div className="spinner-border spinner-border-sm text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <span className="fw-semibold text-dark text-truncate" style={{ fontSize: '0.9rem', maxWidth: '250px' }}>
+            {message || 'Loading...'}
+          </span>
+        </MotionDiv>
+      )}
+    </AnimatePresence>
   )
 }

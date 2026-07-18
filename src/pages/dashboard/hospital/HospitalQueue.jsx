@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Spinner, Badge } from 'react-bootstrap';
+import { Card, Button, Spinner, Badge, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaUserInjured, FaStethoscope, FaCalendarDay, FaArrowRight } from 'react-icons/fa';
 import { supabase } from '../../../lib/supabaseClient';
+import { useUi } from '../../../context/uiContextBase';
 
 export default function HospitalQueue() {
   const [visits, setVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { showSubtleLoader, hideSubtleLoader } = useUi();
 
   useEffect(() => {
     fetchQueue();
   }, []);
 
   const fetchQueue = async () => {
-    setLoading(true);
+    showSubtleLoader('Fetching hospital queue...');
     setError(null);
     try {
       const { data, error } = await supabase
@@ -37,6 +39,7 @@ export default function HospitalQueue() {
       setError('Failed to fetch the hospital queue.');
     } finally {
       setLoading(false);
+      hideSubtleLoader();
     }
   };
 
@@ -49,73 +52,61 @@ export default function HospitalQueue() {
 
   return (
     <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="h4 mb-0 text-primary fw-bold" style={{ fontFamily: 'Sora' }}>Hospital Queue</h2>
-        <Button variant="outline-primary" onClick={fetchQueue} disabled={loading}>
-          {loading ? <Spinner animation="border" size="sm" /> : 'Refresh'}
+      <div className="d-flex justify-content-end mb-4">
+        <Button variant="primary" className="rounded-pill px-4 shadow-sm" onClick={fetchQueue}>
+          Refresh Queue
         </Button>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          <Table responsive hover className="mb-0 align-middle">
-            <thead className="bg-light">
-              <tr>
-                <th className="border-0 px-4 py-3 text-muted">Patient</th>
-                <th className="border-0 py-3 text-muted">Vitals/Info</th>
-                <th className="border-0 text-end px-4 py-3 text-muted">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="3" className="text-center py-4">
-                    <Spinner animation="border" size="sm" className="text-primary me-2" />
-                    <span className="text-muted small">Loading queue...</span>
-                  </td>
-                </tr>
-              ) : visits.length === 0 ? (
-                <tr>
-                  <td colSpan="3" className="text-center py-5">
-                    <div className="text-muted mb-3"><FaUserInjured size={40} /></div>
-                    <h5>Queue is empty</h5>
-                    <p className="text-muted">No patients are currently waiting for pharmacy.</p>
-                  </td>
-                </tr>
-              ) : (
-                visits.map((visit) => {
-                  const patient = visit.patients;
-                  
-                  return (
-                    <tr key={visit.id}>
-                      <td className="px-4 py-3">
-                        <div className="fw-bold text-dark">{patient?.first_name} {patient?.last_name}</div>
-                      </td>
-                      <td className="py-3">
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" className="text-primary mb-3" />
+          <p className="text-muted">Loading queue...</p>
+        </div>
+      ) : visits.length === 0 ? (
+        <div className="text-center py-5 bg-white rounded-4 shadow-sm border-0 mt-2">
+          <div className="text-muted mb-3"><FaUserInjured size={48} opacity={0.5} /></div>
+          <h5 className="fw-bold">Queue is empty</h5>
+          <p className="text-muted">No patients are currently waiting for pharmacy.</p>
+        </div>
+      ) : (
+        <Row className="g-3">
+          {visits.map((visit) => {
+            const patient = visit.patients;
+            return (
+              <Col xs={12} md={6} xl={4} key={visit.id}>
+                <Card className="h-100 border shadow-sm" style={{ transition: 'all 0.2s', borderColor: 'rgba(0,0,0,0.08)' }}>
+                  <Card.Body className="d-flex flex-column gap-3 p-4">
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-circle d-flex align-items-center justify-content-center">
+                        <FaUserInjured size={24} />
+                      </div>
+                      <div>
+                        <h6 className="mb-1 fw-bold text-dark fs-5">{patient?.first_name} {patient?.last_name}</h6>
                         <div className="text-muted small">
                           {getAge(patient?.date_of_birth)} yrs • {patient?.gender}
                         </div>
-                      </td>
-                      <td className="text-end px-4 py-3">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => navigate(`/dashboard/hospital-queue/fulfill?visit_id=${visit.id}`)}
-                          className="rounded-pill px-3"
-                        >
-                          Fulfill <FaArrowRight className="ms-1" size={12} />
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </Table>
-        </Card.Body>
-      </Card>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto pt-3 border-top d-flex justify-content-end">
+                      <Button
+                        variant="primary"
+                        onClick={() => navigate(`/dashboard/hospital-queue/fulfill?visit_id=${visit.id}`)}
+                        className="rounded-pill px-4 fw-medium"
+                      >
+                        Fulfill <FaArrowRight className="ms-2" size={12} />
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+      )}
     </div>
   );
 }

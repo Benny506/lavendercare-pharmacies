@@ -1,16 +1,36 @@
 import React from 'react';
-import { Nav, Button, Offcanvas, Image } from 'react-bootstrap';
+import { Nav, Button, Offcanvas, Image, Badge } from 'react-bootstrap';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { FaUserMd, FaSignOutAlt, FaBoxOpen, FaPills, FaBoxes, FaShoppingBasket, FaFirstOrder } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useUi } from '../../context/uiContextBase';
+import { useBadgeCounts } from '../../context/BadgeCountsContext';
 import { TbMoneybag } from "react-icons/tb";
+import { getPublicImageUrl } from '../../lib/requestApi';
 
 const Sidebar = ({ show, onHide }) => {
   const { logout } = useAuth();
   const { showAlert } = useUi();
+  const { counts } = useBadgeCounts();
   const navigate = useNavigate();
   const location = useLocation();
+  const { profile } = useSelector((state) => state.userProfile);
+  const isIframeMode = sessionStorage.getItem('isIframeMode') === 'true';
+
+  const getInitials = (name) => {
+    if (!name) return '??';
+    const words = name.trim().split(/\s+/);
+    if (words.length > 1) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    if (name.length > 1) {
+      return name.substring(0, 2).toUpperCase();
+    }
+    return (name[0] + name[0]).toUpperCase();
+  };
+
+  const initials = getInitials(profile?.pharmacy_name || "PH");
 
   const handleLogout = async () => {
     try {
@@ -40,10 +60,24 @@ const Sidebar = ({ show, onHide }) => {
     <div className="d-flex flex-column h-100 pt-4">
       <div className="mb-4 px-3">
         <div className="d-flex align-items-center gap-2 mb-1">
-          <Image src="/logo.svg" alt="LavenderCare" width="40" height="40" className="bg-white rounded-circle p-1" />
-          <span className="text-white fw-bold fs-5" style={{ fontFamily: 'Sora' }}>LavenderCare</span>
+          {profile?.profile_img ? (
+            <Image src={getPublicImageUrl({ path: profile.profile_img, bucket_name: 'user_profiles' })} alt={profile?.pharmacy_name || "Pharmacy"} width="40" height="40" className="bg-white rounded-circle p-1" style={{ objectFit: 'cover' }} />
+          ) : (
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm bg-white"
+              style={{
+                width: '40px',
+                height: '40px',
+                color: '#7B3FE4',
+                fontSize: '1rem',
+                flexShrink: 0
+              }}
+            >
+              {initials}
+            </div>
+          )}
+          <span className="text-white fw-bold fs-5 text-truncate" style={{ fontFamily: 'Sora' }}>{profile?.pharmacy_name || "Pharmacy"}</span>
         </div>
-        <small className="text-white-50 ms-1">Pharmacy Portal</small>
       </div>
 
       <Nav className="flex-column flex-grow-1 px-2">
@@ -67,13 +101,25 @@ const Sidebar = ({ show, onHide }) => {
         </NavLink>
 
         <NavLink to="/dashboard/orders" style={navLinkStyle} onClick={() => onHide && onHide()}>
-          <TbMoneybag className="me-3" size={18} /> Orders
+          <div className="d-flex align-items-center w-100">
+            <TbMoneybag className="me-3" size={18} />
+            <span>Orders</span>
+            {counts?.orders > 0 && (
+              <Badge bg="danger" pill className="ms-auto">{counts.orders}</Badge>
+            )}
+          </div>
         </NavLink>
 
         <div className="mt-4 mb-2 px-3 text-white-50 small text-uppercase fw-bold" style={{ letterSpacing: '1px', fontSize: '0.75rem' }}>Hospital</div>
 
         <NavLink to="/dashboard/hospital-queue" style={navLinkStyle} onClick={() => onHide && onHide()}>
-          <FaFirstOrder className="me-3" size={18} /> Hospital Queue
+          <div className="d-flex align-items-center w-100">
+            <FaFirstOrder className="me-3" size={18} />
+            <span>Hospital Queue</span>
+            {counts?.queue > 0 && (
+              <Badge bg="danger" pill className="ms-auto">{counts.queue}</Badge>
+            )}
+          </div>
         </NavLink>
 
         <div className='mb-3'>
@@ -91,15 +137,26 @@ const Sidebar = ({ show, onHide }) => {
         </NavLink>
       </Nav>
 
-      <div className="mt-auto px-2 mb-3">
-        <Button
-          variant="link"
-          className="text-white text-decoration-none d-flex align-items-center w-100 px-3 py-2 rounded hover-bg-white-10"
-          onClick={handleLogout}
-          style={{ transition: 'all 0.2s' }}
-        >
-          <FaSignOutAlt className="me-3" /> Logout
-        </Button>
+      <div className="mt-auto px-3 pb-4">
+        {isIframeMode ? (
+          <Button
+            variant="danger"
+            className="w-100 d-flex align-items-center justify-content-center"
+            style={{ padding: '0.6rem' }}
+            onClick={() => window.parent.postMessage({ type: 'EXIT_PHARMACY_IFRAME' }, '*')}
+          >
+            <FaSignOutAlt className="me-3" /> Exit Pharmacy
+          </Button>
+        ) : (
+          <Button
+            variant="outline-light"
+            className="w-100 d-flex align-items-center justify-content-center border-0 opacity-75 hover-opacity-100"
+            style={{ padding: '0.6rem', transition: 'all 0.2s' }}
+            onClick={handleLogout}
+          >
+            <FaSignOutAlt className="me-3" /> Logout
+          </Button>
+        )}
       </div>
     </div>
   );

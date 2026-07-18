@@ -44,6 +44,18 @@ const TopBar = ({ toggleSidebar }) => {
         description: 'Track and manage customer medications orders.'
       };
     }
+    if (path.includes('/dashboard/hospital-queue/fulfill')) {
+      return {
+        title: 'Fulfill Prescription',
+        description: 'Review and dispense medications for the patient.'
+      };
+    }
+    if (path.includes('/dashboard/hospital-queue')) {
+      return {
+        title: 'Hospital Queue',
+        description: 'View and fulfill prescriptions for waiting patients.'
+      };
+    }
     return {
       title: 'Dashboard',
       description: 'Welcome to your pharmacy inventory system.'
@@ -81,41 +93,20 @@ const TopBar = ({ toggleSidebar }) => {
         </div>
 
         {/* Right Side Actions */}
-        <div className="ms-auto d-flex align-items-center gap-3">
-          <Badge 
-            pill 
-            bg={profile?.is_approved ? 'success' : 'warning'} 
-            className={profile?.is_approved ? 'px-3' : 'px-3 text-dark'}
-            style={{ fontSize: '0.75rem', fontWeight: '600' }}
-          >
-            {profile?.is_approved ? 'Approved' : 'Pending Approval'}
-          </Badge>
-
-          {/* User Avatar or Initials */}
-          <div className="d-flex align-items-center gap-2">
-            {profile?.profile_img ? (
-              <img 
-                src={getPublicImageUrl({ path: profile.profile_img, bucket_name: 'user_profiles' })} 
-                alt="Pharmacy" 
-                className="rounded-circle border"
-                style={{ width: '36px', height: '36px', objectFit: 'cover' }}
-              />
-            ) : (
-              <div 
-                className="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
-                style={{ 
-                  width: '36px', 
-                  height: '36px', 
-                  backgroundColor: '#7B3FE4', 
-                  color: 'white',
-                  fontSize: '0.85rem'
-                }}
-              >
-                {initials}
-              </div>
-            )}
+        {
+          !profile?.is_approved
+          &&
+          <div className="ms-auto d-flex align-items-center gap-3">
+            <Badge
+              pill
+              bg={profile?.is_approved ? 'success' : 'warning'}
+              className={profile?.is_approved ? 'px-3' : 'px-3 text-dark'}
+              style={{ fontSize: '0.75rem', fontWeight: '600' }}
+            >
+              {'Pending Approval'}
+            </Badge>
           </div>
-        </div>
+        }
       </Container>
     </Navbar>
   );

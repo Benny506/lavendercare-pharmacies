@@ -8,18 +8,18 @@ const InventorySetup = () => {
   const [activeTab, setActiveTab] = useState('manufacturers');
 
   return (
-    <Container fluid className="" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>      
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: '70vh' }}>
+    <Container fluid className="p-0" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      <Card className="border-0 p-0 m-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: '70vh' }}>
         <Card.Header className="bg-white border-bottom p-0">
-          <Nav 
-            variant="tabs" 
+          <Nav
+            variant="tabs"
             activeKey={activeTab}
             onSelect={(k) => setActiveTab(k)}
-            className="px-3 pt-3 border-bottom-0 gap-2 flex-nowrap overflow-auto"
+            className="px-3 pt-3 border-bottom-0 gap-2 flex-nowrap overflow-auto hide-scrollbar"
           >
             <Nav.Item>
-              <Nav.Link 
-                eventKey="manufacturers" 
+              <Nav.Link
+                eventKey="manufacturers"
                 className={`d-flex align-items-center gap-2 px-4 py-3 border-0 rounded-top-3 text-nowrap ${activeTab === 'manufacturers' ? 'fw-bold text-primary bg-light-primary' : 'text-muted'}`}
                 style={activeTab === 'manufacturers' ? { borderBottom: '3px solid #7B3FE4', color: '#7B3FE4' } : {}}
               >
@@ -27,7 +27,7 @@ const InventorySetup = () => {
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link 
+              <Nav.Link
                 eventKey="suppliers"
                 className={`d-flex align-items-center gap-2 px-4 py-3 border-0 rounded-top-3 text-nowrap ${activeTab === 'suppliers' ? 'fw-bold text-primary bg-light-primary' : 'text-muted'}`}
                 style={activeTab === 'suppliers' ? { borderBottom: '3px solid #7B3FE4', color: '#7B3FE4' } : {}}

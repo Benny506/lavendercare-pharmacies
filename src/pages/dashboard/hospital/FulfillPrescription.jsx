@@ -11,7 +11,7 @@ export default function FulfillPrescription() {
   const [searchParams] = useSearchParams();
   const visitId = searchParams.get('visit_id');
   const navigate = useNavigate();
-  const { showAlert, startLoading, stopLoading } = useUi();
+  const { showAlert, startLoading, stopLoading, showSubtleLoader, hideSubtleLoader } = useUi();
 
   const { drugs } = useSelector(state => state.inventory);
   const { profile } = useSelector(state => state.userProfile);
@@ -19,11 +19,12 @@ export default function FulfillPrescription() {
 
   const [visit, setVisit] = useState(null);
   const [prescriptions, setPrescriptions] = useState([]);
-  const [loadingVisit, setLoadingVisit] = useState(true);
 
   // Mapping of prescription.id -> array of { batch_id, formulation_id, quantity, batchInfo }
   const [dispensedItems, setDispensedItems] = useState({});
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
 
   useEffect(() => {
     if (visitId && profile?.id) {
@@ -32,7 +33,7 @@ export default function FulfillPrescription() {
   }, [visitId, profile?.id]);
 
   const fetchVisitAndPrescriptions = async () => {
-    setLoadingVisit(true);
+    showSubtleLoader('Loading prescription details...');
     try {
       const { data: vData, error: vErr } = await supabase
         .from('visits')
@@ -77,7 +78,7 @@ export default function FulfillPrescription() {
       console.error(error);
       showAlert('error', 'Failed to load visit details or inventory');
     } finally {
-      setLoadingVisit(false);
+      hideSubtleLoader();
     }
   };
 
@@ -177,22 +178,47 @@ export default function FulfillPrescription() {
     }
   };
 
+  const executeCancel = async () => {
+    if (!cancellationReason.trim()) {
+      showAlert('error', 'Please provide a cancellation reason.');
+      return;
+    }
+
+    setShowConfirm(false);
+    setShowCancelModal(false);
+    startLoading();
+
+    try {
+      const { data, error } = await supabase.rpc('cancel_hospital_prescription_visit', {
+        p_visit_id: visitId,
+        p_pharmacy_id: profile?.id,
+        p_reason: cancellationReason
+      });
+
+      if (error) throw error;
+      showAlert('success', 'Prescription order cancelled successfully!');
+      navigate('/dashboard/hospital-queue');
+    } catch (error) {
+      console.error(error);
+      showAlert('error', error.message || 'Failed to cancel prescription');
+    } finally {
+      stopLoading();
+    }
+  };
+
   if (!visitId) return <div className="p-4">No visit selected.</div>;
 
   return (
     <div className="container-fluid py-4">
-      <div className="d-flex align-items-center mb-4">
-        <Button variant="link" className="p-0 text-secondary me-3" onClick={() => navigate(-1)}>
-          <FaArrowLeft size={20} />
+      <div className="mb-4">
+        <Button variant="link" className="p-0 text-muted text-decoration-none d-inline-flex align-items-center" onClick={() => navigate('/dashboard/hospital-queue')}>
+          <FaArrowLeft size={16} className="me-2" /> Back to Queue
         </Button>
-        <h2 className="h4 mb-0 text-primary fw-bold" style={{ fontFamily: 'Sora' }}>Fulfill Prescriptions</h2>
       </div>
 
-      {loadingVisit ? (
-        <div className="text-center py-5"><Spinner animation="border" /></div>
-      ) : (
+      {!visit && prescriptions.length === 0 ? null : (
         <>
-          <Card className="shadow-sm border-0 mb-4 bg-primary text-white">
+          <Card className="shadow-sm border-0 mb-4 bg-primary text-white rounded-4">
             <Card.Body>
               <Row>
                 <Col md={6}>
@@ -220,99 +246,95 @@ export default function FulfillPrescription() {
                 <Card.Header className="bg-white py-3 border-bottom-0">
                   <h5 className="mb-0 fw-bold">Prescribed Items</h5>
                 </Card.Header>
-                <Card.Body className="p-0">
-                  <Table responsive hover className="mb-0 align-middle">
-                    <thead className="bg-light">
-                      <tr>
-                        <th className="border-0 px-4 py-3">Prescription</th>
-                        <th className="border-0 py-3" style={{ width: '350px' }}>Dispense From Inventory</th>
-                        <th className="border-0 py-3 text-end pe-4">Cost</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {prescriptions.length === 0 ? (
-                        <tr>
-                          <td colSpan="3" className="text-center py-4 text-muted">No prescriptions found.</td>
-                        </tr>
-                      ) : (
-                        prescriptions.map(p => {
-                          const selectedItems = dispensedItems[p.id] || [];
+                <Card.Body className="p-3 bg-light">
+                  {prescriptions.length === 0 ? (
+                    <div className="text-center py-4 text-muted bg-white rounded border">No prescriptions found.</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3">
+                      {prescriptions.map(p => {
+                        const selectedItems = dispensedItems[p.id] || [];
+                        const itemCost = selectedItems.reduce((acc, curr) => acc + (curr.quantity * (curr.batchInfo.unit_price || 0)), 0);
 
-                          return (
-                            <tr key={p.id}>
-                              <td className="px-4 py-3">
-                                <div className="fw-bold">{p.medication_name}</div>
-                                <div className="text-muted small mb-1">{p.dosage} • {p.frequency} • {p.duration}</div>
-                                {p.instructions && <Badge bg="light" text="dark" className="fw-normal">{p.instructions}</Badge>}
-                              </td>
-                              <td className="py-3">
-                                {/* List already selected batches */}
-                                {selectedItems.map((item, idx) => {
-                                  const isCovered = item.batchInfo?.drug_formulations?.is_hmo_covered;
-                                  return (
-                                    <div key={idx} className="d-flex align-items-center justify-content-between bg-light rounded p-2 mb-2 border border-success">
-                                      <div>
-                                        <div className="small fw-bold">
-                                          {item.batchInfo?.drug_formulations?.drugs?.name}
-                                          {isHmoVisit && (
-                                            <Badge bg={isCovered ? "success" : "secondary"} className="ms-2" style={{ fontSize: '10px' }}>
-                                              {isCovered ? 'HMO Covered' : 'Not Covered'}
-                                            </Badge>
-                                          )}
+                        return (
+                          <Card key={p.id} className="border-0 shadow-sm rounded-4">
+                            <Card.Body className="p-4">
+                              <Row className="gy-3">
+                                <Col md={4}>
+                                  <div className="fw-bold text-dark fs-5 mb-1">{p.medication_name}</div>
+                                  <div className="text-muted small mb-2">{p.dosage} • {p.frequency} • {p.duration}</div>
+                                  {p.notes && <Badge bg="light" text="dark" className="fw-normal">{p.notes}</Badge>}
+                                </Col>
+                                <Col md={5} className="border-start border-end px-4">
+                                  <div className="mb-3 text-muted small fw-bold text-uppercase">Dispense From Inventory</div>
+                                  {/* List already selected batches */}
+                                  {selectedItems.map((item, idx) => {
+                                    const isCovered = item.batchInfo?.drug_formulations?.is_hmo_covered;
+                                    return (
+                                      <div key={idx} className="d-flex align-items-center justify-content-between bg-light rounded p-2 mb-2 border border-success">
+                                        <div>
+                                          <div className="small fw-bold">
+                                            {item.batchInfo?.drug_formulations?.drugs?.name}
+                                            {isHmoVisit && (
+                                              <Badge bg={isCovered ? "success" : "secondary"} className="ms-2" style={{ fontSize: '10px' }}>
+                                                {isCovered ? 'HMO Covered' : 'Not Covered'}
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          <div className="text-muted" style={{ fontSize: '11px' }}>Qty: {item.quantity} (Batch: {item.batchInfo?.batch_number})</div>
                                         </div>
-                                        <div className="text-muted" style={{ fontSize: '11px' }}>Qty: {item.quantity} (Batch: {item.batchInfo?.batch_number})</div>
+                                        <Button variant="link" className="text-danger p-0 ms-2" onClick={() => handleRemoveDispensed(p.id, idx)}>
+                                          <FaTimes />
+                                        </Button>
                                       </div>
-                                      <Button variant="link" className="text-danger p-0 ms-2" onClick={() => handleRemoveDispensed(p.id, idx)}>
-                                        <FaTimes />
-                                      </Button>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
 
-                                {/* Form to add a batch */}
-                                <Form
-                                  onSubmit={(e) => {
-                                    e.preventDefault();
-                                    const form = e.target;
-                                    handleSelectBatch(p.id, form.batchId.value, form.quantity.value);
-                                    form.reset();
-                                  }}
-                                  className="d-flex gap-2"
-                                >
-                                  <Form.Select size="sm" name="batchId" required>
-                                    <option value="">Select inventory batch...</option>
-                                    {batches?.map(b => {
-                                      const name = b.drug_formulations?.drugs?.name;
-                                      const strength = b.drug_formulations?.strength;
-                                      const price = b.unit_price;
-                                      const isCovered = b.drug_formulations?.is_hmo_covered;
-                                      const isNegative = b.quantity_remaining <= 0;
-                                      return (
-                                        <option key={b.id} value={b.id}>
-                                          {isNegative ? '⚠️ ' : ''}{name} {strength} (₦{price}) {isHmoVisit ? (isCovered ? ' - [HMO Covered]' : ' - [Not Covered]') : ''} - Stock: {b.quantity_remaining} {isNegative ? '(Negative Stock)' : ''}
-                                        </option>
-                                      )
-                                    })}
-                                  </Form.Select>
-                                  <Form.Control type="number" name="quantity" size="sm" style={{ width: '70px' }} placeholder="Qty" required min="1" />
-                                  <Button type="submit" size="sm" variant="outline-primary">+</Button>
-                                </Form>
-                              </td>
-                              <td className="py-3 text-end pe-4">
-                                {selectedItems.length > 0 ? (
-                                  <div className="fw-bold text-dark">
-                                    ₦{selectedItems.reduce((acc, curr) => acc + (curr.quantity * (curr.batchInfo.unit_price || 0)), 0).toLocaleString()}
-                                  </div>
-                                ) : (
-                                  <span className="text-muted small">-</span>
-                                )}
-                              </td>
-                            </tr>
-                          )
-                        })
-                      )}
-                    </tbody>
-                  </Table>
+                                  {/* Form to add a batch */}
+                                  <Form
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      const form = e.target;
+                                      handleSelectBatch(p.id, form.batchId.value, form.quantity.value);
+                                      form.reset();
+                                    }}
+                                    className="d-flex flex-wrap gap-2 mt-2"
+                                  >
+                                    <Form.Select size="sm" name="batchId" required>
+                                      <option value="">Select inventory batch...</option>
+                                      {batches?.map(b => {
+                                        const name = b.drug_formulations?.drugs?.name;
+                                        const strength = b.drug_formulations?.strength;
+                                        const price = b.unit_price;
+                                        const isCovered = b.drug_formulations?.is_hmo_covered;
+                                        const isNegative = b.quantity_remaining <= 0;
+                                        return (
+                                          <option key={b.id} value={b.id}>
+                                            {isNegative ? '⚠️ ' : ''}{name} {strength} (₦{price}) {isHmoVisit ? (isCovered ? ' - [HMO Covered]' : ' - [Not Covered]') : ''} - Stock: {b.quantity_remaining} {isNegative ? '(Negative Stock)' : ''}
+                                          </option>
+                                        )
+                                      })}
+                                    </Form.Select>
+                                    <Form.Control type="number" name="quantity" size="sm" style={{ width: '70px' }} placeholder="Qty" required min="1" />
+                                    <Button type="submit" size="sm" variant="outline-primary">+</Button>
+                                  </Form>
+                                </Col>
+                                <Col md={3} className="text-md-end d-flex flex-column justify-content-center">
+                                  <div className="text-muted small text-uppercase mb-1">Item Cost</div>
+                                  {selectedItems.length > 0 ? (
+                                    <div className="fw-bold text-primary fs-5">
+                                      ₦{itemCost.toLocaleString()}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted">-</span>
+                                  )}
+                                </Col>
+                              </Row>
+                            </Card.Body>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
@@ -344,14 +366,24 @@ export default function FulfillPrescription() {
                     Only click "Complete" after the patient has physically paid the full "Patient Pays" amount at the counter. If the amount is ₦0.00, you're good to go!
                   </div>
 
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-100 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2"
-                    onClick={handleFulfill}
-                  >
-                    <FaCheckCircle /> Complete
-                  </Button>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="w-100 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2"
+                      onClick={() => setShowCancelModal(true)}
+                    >
+                      <FaTimes /> Cancel Order
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-100 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2"
+                      onClick={handleFulfill}
+                    >
+                      <FaCheckCircle /> Complete
+                    </Button>
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
@@ -362,12 +394,41 @@ export default function FulfillPrescription() {
       <ConfirmModal
         show={showConfirm}
         onHide={() => setShowConfirm(false)}
-        onConfirm={() => executeFulfill([])}
+        onConfirm={() => {
+          setShowConfirm(false);
+          setShowCancelModal(true);
+        }}
         title="Complete without Fulfilling"
-        message="You have not selected any medications to dispense. Are you sure you want to complete this prescription with 0 items? This will close the visit on your end."
-        confirmText="Yes, Complete"
-        cancelText="Cancel"
+        message="You have not selected any medications to dispense. Are you sure you want to complete this prescription with 0 items? This will officially cancel the order."
+        confirmText="Yes, Cancel Order"
+        cancelText="Go Back"
         variant="warning"
+      />
+
+      {/* Cancel Modal with Reason */}
+      <ConfirmModal
+        show={showCancelModal}
+        onHide={() => setShowCancelModal(false)}
+        onConfirm={executeCancel}
+        title="Cancel Prescription Order"
+        message={
+          <div>
+            <p>Please provide a reason for cancelling this prescription order. This will cancel all pending items for this visit.</p>
+            <Form.Group>
+              <Form.Label className="small fw-bold text-danger">Cancellation Reason *</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                placeholder="e.g. Medication out of stock, patient refused..."
+              />
+            </Form.Group>
+          </div>
+        }
+        confirmText="Confirm Cancellation"
+        cancelText="Back"
+        variant="danger"
       />
     </div>
   );

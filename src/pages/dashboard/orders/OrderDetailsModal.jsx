@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Card, Spinner, Image, Row, Col } from 'react-bootstrap';
 import { supabase } from '../../../lib/supabaseClient';
 import ConfirmModal from '../../../components/common/ConfirmModal';
+import { getPublicImageUrl } from '../../../lib/requestApi';
 ConfirmModal
 
 const OrderDetailsModal = ({ order, show, onHide }) => {
@@ -34,7 +35,7 @@ const OrderDetailsModal = ({ order, show, onHide }) => {
 
   const renderItem = (item) => {
     const snapshot = item.item_snapshot || {};
-    
+
     // Support both consumer nested format and hospital flat format
     const drugName = snapshot.drugInfo?.name || snapshot.brand_name || 'N/A';
     const genericName = snapshot.drugInfo?.generic_name || snapshot.generic_name || 'N/A';
@@ -47,10 +48,10 @@ const OrderDetailsModal = ({ order, show, onHide }) => {
         <Card.Body>
           <Row className='wrap g-3'>
             <Col lg={2} className="text-center">
-              <Image 
-                src={imageUrl || 'https://via.placeholder.com/150'} 
-                rounded 
-                className="item-image" 
+              <Image
+                src={getPublicImageUrl({ path: imageUrl, bucket_name: 'drugs' })}
+                rounded
+                className="item-image"
               />
             </Col>
             <Col lg={10}>

@@ -94,8 +94,8 @@ const Manufacturers = () => {
   return (
     <div>
       {/* Header Actions */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div className="position-relative" style={{ minWidth: '300px' }}>
+      <div className="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
+        <div className="position-relative" style={{}}>
           <FaSearch className="position-absolute text-muted" style={{ top: '12px', left: '12px' }} />
           <Form.Control
             type="text"
@@ -132,7 +132,7 @@ const Manufacturers = () => {
             <Col key={item.id}>
               <Card className="h-100 border-0 shadow-sm rounded-4 hover-shadow transition-all">
                 <Card.Body className="p-4">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
+                  <div className="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
                     <div className="d-flex align-items-center gap-3">
                       <div className="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary" style={{ width: '48px', height: '48px' }}>
                         <FaIndustry size={20} />
@@ -142,7 +142,7 @@ const Manufacturers = () => {
                         <small className="text-muted">ID: {item.id.slice(0, 8)}</small>
                       </div>
                     </div>
-                    <div className="d-flex gap-2">
+                    <div className="d-flex flex-wrap gap-2">
                       <Button
                         variant="light"
                         size="sm"

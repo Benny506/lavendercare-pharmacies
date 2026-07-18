@@ -13,7 +13,7 @@ const Suppliers = () => {
   const { profile } = useSelector((state) => state.userProfile);
   const dispatch = useDispatch();
   const { showAlert, startLoading, stopLoading } = useUi();
-  
+
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -32,15 +32,15 @@ const Suppliers = () => {
       startLoading();
       try {
         if (editMode && selectedItem) {
-          await dispatch(updateSupplier({ 
+          await dispatch(updateSupplier({
             id: selectedItem.id,
-            supplier: values 
+            supplier: values
           })).unwrap();
           showAlert('success', 'Supplier updated successfully!');
         } else {
-          await dispatch(addSupplier({ 
-            pharmacyId: profile.id, 
-            supplier: values 
+          await dispatch(addSupplier({
+            pharmacyId: profile.id,
+            supplier: values
           })).unwrap();
           showAlert('success', 'Supplier added successfully!');
         }
@@ -87,15 +87,15 @@ const Suppliers = () => {
     }
   };
 
-  const filteredData = suppliers.filter(s => 
+  const filteredData = suppliers.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div>
       {/* Header Actions */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div className="position-relative" style={{ minWidth: '300px' }}>
+      <div className="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
+        <div className="position-relative" style={{}}>
           <FaSearch className="position-absolute text-muted" style={{ top: '12px', left: '12px' }} />
           <Form.Control
             type="text"
@@ -105,8 +105,8 @@ const Suppliers = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button 
-          variant="primary" 
+        <Button
+          variant="primary"
           onClick={() => setShowModal(true)}
           className="d-flex align-items-center gap-2 rounded-pill px-4 shadow-sm"
           style={{ backgroundColor: '#7B3FE4', border: 'none' }}
@@ -127,7 +127,7 @@ const Suppliers = () => {
             <Col key={item.id}>
               <Card className="h-100 border-0 shadow-sm rounded-4 hover-shadow transition-all">
                 <Card.Body className="p-4">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
+                  <div className="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
                     <div className="d-flex align-items-center gap-3">
                       <div className="rounded-circle bg-light d-flex align-items-center justify-content-center text-success" style={{ width: '48px', height: '48px' }}>
                         <FaTruck size={20} />
@@ -137,18 +137,18 @@ const Suppliers = () => {
                         <small className="text-muted">ID: {item.id.slice(0, 8)}</small>
                       </div>
                     </div>
-                    <div className="d-flex gap-2">
-                      <Button 
-                        variant="light" 
-                        size="sm" 
+                    <div className="d-flex flex-wrap gap-2">
+                      <Button
+                        variant="light"
+                        size="sm"
                         className="text-primary rounded-circle p-2"
                         onClick={() => handleEdit(item)}
                       >
                         <FaEdit size={14} />
                       </Button>
-                      <Button 
-                        variant="light" 
-                        size="sm" 
+                      <Button
+                        variant="light"
+                        size="sm"
                         className="text-danger rounded-circle p-2"
                         onClick={() => handleDelete(item.id)}
                       >
@@ -156,7 +156,7 @@ const Suppliers = () => {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <div className="mt-3 pt-3 border-top">
                     <div className="d-flex align-items-center gap-2 text-muted small mb-2">
                       <FaPhone size={12} />
@@ -205,8 +205,8 @@ const Suppliers = () => {
               <Form.Control.Feedback type="invalid">{formik.errors.contact_info}</Form.Control.Feedback>
             </Form.Group>
             <div className="d-grid">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading}
                 className="rounded-pill py-2 fw-bold"
                 style={{ backgroundColor: '#7B3FE4', border: 'none' }}

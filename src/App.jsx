@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { UiProvider } from './context/UiContext';
 import { AuthProvider } from './context/AuthContext';
+import { BadgeCountsProvider } from './context/BadgeCountsContext';
 import AutoLogin from './components/auth/AutoLogin';
 import AutoLoginGate from './components/auth/AutoLoginGate';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -24,32 +25,34 @@ function App() {
     <Router>
       <UiProvider>
         <AuthProvider>
-          <AutoLoginGate />
-          <Routes>
-            <Route element={<AutoLogin />}>
-              {/* Public/Auth Routes */}
-              <Route path="/" element={<Navigate to="/auth/login" replace />} />
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route path="/auth/verify-otp" element={<VerifyOtp />} />
+          <BadgeCountsProvider>
+            <AutoLoginGate />
+            <Routes>
+              <Route element={<AutoLogin />}>
+                {/* Public/Auth Routes */}
+                <Route path="/" element={<Navigate to="/auth/login" replace />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                <Route path="/auth/reset-password" element={<ResetPassword />} />
+                <Route path="/auth/verify-otp" element={<VerifyOtp />} />
 
-              {/* Protected Dashboard Routes */}
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route path="profile" element={<Profile />} />
-                <Route path="inventory/setup" element={<InventorySetup />} />
-                <Route path="inventory/drugs" element={<Drugs />} />
-                <Route path="inventory/catalog" element={<Drugs />} />
-                <Route path="inventory/stock" element={<Stock />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="hospital-queue" element={<HospitalQueue />} />
-                <Route path="hospital-queue/fulfill" element={<FulfillPrescription />} />
-                {/* Fallback for dashboard root */}
-                <Route index element={<Navigate to="profile" replace />} />
+                {/* Protected Dashboard Routes */}
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="inventory/setup" element={<InventorySetup />} />
+                  <Route path="inventory/drugs" element={<Drugs />} />
+                  <Route path="inventory/catalog" element={<Drugs />} />
+                  <Route path="inventory/stock" element={<Stock />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="hospital-queue" element={<HospitalQueue />} />
+                  <Route path="hospital-queue/fulfill" element={<FulfillPrescription />} />
+                  {/* Fallback for dashboard root */}
+                  <Route index element={<Navigate to="profile" replace />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
+            </Routes>
+          </BadgeCountsProvider>
         </AuthProvider>
       </UiProvider>
     </Router>
